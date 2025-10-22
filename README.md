@@ -1,15 +1,15 @@
-# 🛒 Retail Demand Forecasting with Machine Learning  
+#  Retail Demand Forecasting with Machine Learning  
 **Competition:** [Store Sales – Time Series Forecasting](https://www.kaggle.com/competitions/store-sales-time-series-forecasting)
 
 ---
 
-## 📘 Overview
+##  Overview
 This project aims to forecast **daily product sales** across thousands of Favorita grocery stores in Ecuador.  
 The objective is to design a scalable forecasting framework that combines **classical time-series analysis** and **modern machine learning** techniques to capture both **temporal dependencies** and **cross-sectional relationships** among stores, product families, promotions, and external regressors.
 
 ---
 
-## 🎯 Objectives
+## Objectives
 - Predict unit sales for each `(store_nbr, family, date)` tuple in the test period.  
 - Exploit **historical, promotional, transactional, and macroeconomic** data.  
 - Engineer **lag and rolling window features** to capture seasonality and recent trends.  
@@ -18,7 +18,7 @@ The objective is to design a scalable forecasting framework that combines **clas
 
 ---
 
-## 📦 Dataset
+##  Dataset
 The dataset consists of multiple CSV files provided by the competition:
 
 | File | Description |
@@ -36,21 +36,21 @@ The dataset consists of multiple CSV files provided by the competition:
 
 ---
 
-## ⚙️ Methodology
+##  Methodology
 
-### 1️⃣ Exploratory Data Analysis (EDA)
+###  Exploratory Data Analysis (EDA)
 - Visualized **daily and monthly sales trends** to confirm **non-stationarity** and strong **seasonality**.  
 - Identified **holiday spikes** and **promotion-driven sales** increases.  
 - Explored **store-type heterogeneity** and **dominant product families** (e.g., GROCERY, BEVERAGES).
 
-### 2️⃣ Data Cleaning & Integration
+###  Data Cleaning & Integration
 - **Holiday filtering:** removed “Work Day” and transferred duplicates; encoded a binary `is_holiday` flag.  
 - **Oil series:** missing values imputed via **forward fill (ffill)**.  
 - **Merging:** joined external regressors (holidays, oil, transactions, stores) on `date` and `store_nbr`.  
 - **Calendar features:** `year`, `month`, `day`, `dayofweek`, `weekofyear`, and `is_weekend`.  
 - **Memory optimization:** numeric downcasting to enable fast computation and lag generation.
 
-### 3️⃣ Feature Engineering
+###  Feature Engineering
 Engineered **time-based regressors** to capture short- and long-term dependencies:
 
 | Feature Type | Description |
@@ -62,7 +62,7 @@ Engineered **time-based regressors** to capture short- and long-term dependencie
 
 Features were created **per (store_nbr, family)** group to preserve temporal structure.
 
-### 4️⃣ Modeling
+###  Modeling
 Compared several forecasting approaches:
 
 | Model | Description | RMSLE |
@@ -79,7 +79,7 @@ Compared several forecasting approaches:
 
 ---
 
-### 📊 Feature Importance
+###  Feature Importance
 Top predictive drivers:
 1. `roll_mean_7`  
 2. `lag_7`  
@@ -91,7 +91,7 @@ Top predictive drivers:
 
 ---
 
-### 6️⃣ Final Training & Submission
+###  Final Training & Submission
 - Combined full training data (pre-2017-08-16) and test set to ensure consistent lag computation.  
 - Retrained final LightGBM model using the **best iteration (426)**.  
 - Generated forecasts for the competition’s test horizon.  
@@ -99,7 +99,7 @@ Top predictive drivers:
 
 ---
 
-## 📊 Results Summary
+##  Results Summary
 
 | Model | RMSE | RMSLE | Rank (approx.) |
 |--------|------|--------|----------------|
@@ -107,13 +107,13 @@ Top predictive drivers:
 | ARIMA (subset) | — | 0.95 | — |
 | **LightGBM (final)** | 409.30 | **0.7953** | ~468 / 662 |
 
-✅ The model captures basic seasonality and promotion dynamics.  
-⚠️ Still below top-performing Kaggle entries (≈ 0.50 RMSLE).  
-🔧 Future work: advanced hierarchical modeling, per-family tuning, and Bayesian hyperparameter optimization (Optuna).
+ The model captures basic seasonality and promotion dynamics.  
+ Still below top-performing Kaggle entries (≈ 0.50 RMSLE).  
+ Future work: advanced hierarchical modeling, per-family tuning, and Bayesian hyperparameter optimization (Optuna).
 
 ---
 
-## 🧠 Insights & Next Steps
+##  Insights & Next Steps
 - Weekly patterns (`lag_7`, `roll_mean_7`) dominate — **temporal context > categorical context**.  
 - Limited impact of raw calendar features implies potential redundancy with rolling windows.  
 - To reach top performance:
@@ -124,7 +124,7 @@ Top predictive drivers:
 
 ---
 
-## 🧰 Technologies Used
+##  Technologies Used
 - **Python 3.10+**  
 - **LightGBM** for gradient boosting  
 - **Pandas**, **NumPy**, **Matplotlib**, **Seaborn** for data manipulation and visualization  
@@ -132,13 +132,13 @@ Top predictive drivers:
 
 ---
 
-## 📁 File Structure
+##  File Structure
 retail-demand-forecasting-with-lightgbm.ipynb
 The notebook contains the complete pipeline, including **EDA**, **feature engineering**, **model training**, and **evaluation**.
 
 ---
 
-## 🚀 Future Improvements
+##  Future Improvements
 - Incorporate **additional external features** such as detailed holidays, promotions, and weather data.  
 - Use **temporal cross-validation** or **rolling-origin evaluation** for improved robustness.  
 - Explore **neural forecasting models** (e.g., LSTM, Temporal Fusion Transformer).  
@@ -146,11 +146,11 @@ The notebook contains the complete pipeline, including **EDA**, **feature engine
 
 ---
 
-## 👤 Author
+##  Author
 **Matteo Sisti**  
 MSc in Data Science and Engineering – *Politecnico di Torino*  
 Project focused on **applied time series forecasting** and **ML model optimization**.  
 GitHub: [matteos07](https://github.com/matteos07) · Kaggle: [matteos07](https://www.kaggle.com/matteos07)
 
 
-## File Structure
+
