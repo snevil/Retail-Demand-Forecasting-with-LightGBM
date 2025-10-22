@@ -150,7 +150,7 @@ The notebook contains the complete pipeline, including **EDA**, **feature engine
 **Matteo Sisti**  
 MSc in Data Science and Engineering – *Politecnico di Torino*  
 Project focused on **applied time series forecasting** and **ML model optimization**.  
-GitHub: [matteos07](https://github.com/matteos07) · Kaggle: [matteos07](https://www.kaggle.com/matteos07)
+GitHub: [snevil](https://github.com/snevil) · Kaggle: [snevil](https://www.kaggle.com/snevil)
 
 
 
