@@ -1,100 +1,156 @@
-# Retail Demand Forecasting with LightGBM
-
-## Overview
-This project focuses on **predicting future product demand** for retail stores using **machine learning techniques**, with a particular emphasis on **gradient boosting models** (LightGBM).  
-The notebook performs **data preprocessing, feature engineering, model training, and evaluation** on a retail sales dataset to build a robust forecasting pipeline.
+# 🛒 Retail Demand Forecasting with Machine Learning  
+**Competition:** [Store Sales – Time Series Forecasting](https://www.kaggle.com/competitions/store-sales-time-series-forecasting)
 
 ---
 
-## Objectives
-- Develop an accurate **demand forecasting model** to support inventory and supply chain decisions.  
-- Apply **LightGBM** to handle large-scale structured data efficiently.  
-- Implement **feature engineering** techniques to extract temporal, categorical, and aggregate features.  
-- Evaluate model performance using appropriate regression metrics.
+## 📘 Overview
+This project aims to forecast **daily product sales** across thousands of Favorita grocery stores in Ecuador.  
+The objective is to design a scalable forecasting framework that combines **classical time-series analysis** and **modern machine learning** techniques to capture both **temporal dependencies** and **cross-sectional relationships** among stores, product families, promotions, and external regressors.
 
 ---
 
-## Dataset
-The dataset includes historical sales information for multiple stores and items over time.  
-Key variables typically include:  
-- **date**: time of sale  
-- **store/item identifiers**  
-- **sales/demand values**  
-- **calendar or promotional variables** (if available)  
-
-The dataset was preprocessed to handle missing values, create lag-based and rolling statistics, and encode categorical variables for model input.
+## 🎯 Objectives
+- Predict unit sales for each `(store_nbr, family, date)` tuple in the test period.  
+- Exploit **historical, promotional, transactional, and macroeconomic** data.  
+- Engineer **lag and rolling window features** to capture seasonality and recent trends.  
+- Benchmark **ARIMA** (classical) vs. **LightGBM/XGBoost** (ML-based) approaches.  
+- Evaluate performance using **RMSLE**, the official competition metric.
 
 ---
 
-## Methodology
+## 📦 Dataset
+The dataset consists of multiple CSV files provided by the competition:
 
-1. **Exploratory Data Analysis (EDA)**  
-   - Analysis of sales trends and seasonality  
-   - Distribution across stores and items  
-   - Identification and treatment of outliers  
+| File | Description |
+|------|--------------|
+| `train.csv` | Historical daily sales per store and family (target variable `sales`). |
+| `test.csv` | Future dates for which sales must be predicted. |
+| `stores.csv` | Metadata about each store (cluster, city, state, type). |
+| `holidays_events.csv` | Calendar of national, regional, and local holidays (with transferred dates). |
+| `oil.csv` | Daily oil price time series (macroeconomic proxy). |
+| `transactions.csv` | Number of daily receipts per store (proxy for foot traffic). |
 
-2. **Feature Engineering**  
-   - Temporal features: day, week, month, year, weekday  
-   - Lag and rolling window features (e.g., mean demand of previous weeks)  
-   - Store-level and item-level aggregations  
-   - Encoding of categorical identifiers  
-
-3. **Modeling**  
-   - Implementation of **LightGBM Regressor**  
-   - Hyperparameter tuning using grid and Bayesian search  
-   - Cross-validation with time-based splits  
-   - Baseline comparison with Linear Regression and Random Forest  
-
-4. **Evaluation**  
-   - Metrics: **RMSE** (Root Mean Squared Error) and **MAE** (Mean Absolute Error)  
-   - Feature importance and SHAP analysis for interpretability  
+**Granularity:** Daily observations per `(store_nbr, family)`  
+**Training period:** Jan 2013 → Aug 2017  
+**Forecast horizon:** Aug 16 → Aug 31, 2017  
 
 ---
 
-## Results
+## ⚙️ Methodology
 
-| Model | RMSE | MAE |
-|-------|------|-----|
-| Linear Regression | 3458.12 | 2264.51 |
-| Random Forest | 3012.88 | 1920.74 |
-| **LightGBM (tuned)** | **2479.36** | **1683.92** |
+### 1️⃣ Exploratory Data Analysis (EDA)
+- Visualized **daily and monthly sales trends** to confirm **non-stationarity** and strong **seasonality**.  
+- Identified **holiday spikes** and **promotion-driven sales** increases.  
+- Explored **store-type heterogeneity** and **dominant product families** (e.g., GROCERY, BEVERAGES).
 
-- The optimized **LightGBM model** achieved a **RMSE reduction of ~28%** compared to the baseline linear model.  
-- The **most important features** were recent lag-based sales (especially 7-day and 14-day lags), month, and item category.  
-- Feature importance analysis confirmed that **temporal and recency-based information** were key predictors of demand fluctuations.  
+### 2️⃣ Data Cleaning & Integration
+- **Holiday filtering:** removed “Work Day” and transferred duplicates; encoded a binary `is_holiday` flag.  
+- **Oil series:** missing values imputed via **forward fill (ffill)**.  
+- **Merging:** joined external regressors (holidays, oil, transactions, stores) on `date` and `store_nbr`.  
+- **Calendar features:** `year`, `month`, `day`, `dayofweek`, `weekofyear`, and `is_weekend`.  
+- **Memory optimization:** numeric downcasting to enable fast computation and lag generation.
 
-Residual analysis showed no significant autocorrelation, confirming a well-calibrated model suitable for short-term forecasting.
+### 3️⃣ Feature Engineering
+Engineered **time-based regressors** to capture short- and long-term dependencies:
+
+| Feature Type | Description |
+|---------------|-------------|
+| **Lag features** | `lag_1`, `lag_7`, `lag_14`, `lag_28`, `lag_365` — recent and annual dependencies |
+| **Rolling stats** | Means and standard deviations over 7, 14, 28 days (shifted by one day to prevent leakage) |
+| **Promotions & external** | `onpromotion`, `transactions`, `dcoilwtico`, `is_holiday` |
+| **Calendar & events** | `month`, `dayofweek`, `is_weekend`, `is_christmas`, `is_newyear` |
+
+Features were created **per (store_nbr, family)** group to preserve temporal structure.
+
+### 4️⃣ Modeling
+Compared several forecasting approaches:
+
+| Model | Description | RMSLE |
+|--------|--------------|-------|
+| **Naïve / Moving Average** | Baseline reference | ~1.05 |
+| **ARIMA (subset)** | Traditional time-series model | ~0.95 |
+| **LightGBM (Gradient Boosting)** | ML-based with lag features | **~0.87** |
+
+**LightGBM configuration:**
+- Early stopping: 100 rounds  
+- Best iteration: 426  
+- Validation RMSE: 409.30  
+- Validation RMSLE: 0.7953  
 
 ---
 
-## Technologies Used
+### 📊 Feature Importance
+Top predictive drivers:
+1. `roll_mean_7`  
+2. `lag_7`  
+3. `roll_mean_28`  
+4. `lag_1`  
+5. `transactions`, `onpromotion`, `dcoilwtico`  
+
+→ Confirms the dominance of **weekly seasonality** and **recent trend memory** in sales prediction.
+
+---
+
+### 6️⃣ Final Training & Submission
+- Combined full training data (pre-2017-08-16) and test set to ensure consistent lag computation.  
+- Retrained final LightGBM model using the **best iteration (426)**.  
+- Generated forecasts for the competition’s test horizon.  
+- Clipped predictions to non-negative values and exported `submission.csv` in Kaggle format.
+
+---
+
+## 📊 Results Summary
+
+| Model | RMSE | RMSLE | Rank (approx.) |
+|--------|------|--------|----------------|
+| Naïve / MA | — | 1.05 | — |
+| ARIMA (subset) | — | 0.95 | — |
+| **LightGBM (final)** | 409.30 | **0.7953** | ~468 / 662 |
+
+✅ The model captures basic seasonality and promotion dynamics.  
+⚠️ Still below top-performing Kaggle entries (≈ 0.50 RMSLE).  
+🔧 Future work: advanced hierarchical modeling, per-family tuning, and Bayesian hyperparameter optimization (Optuna).
+
+---
+
+## 🧠 Insights & Next Steps
+- Weekly patterns (`lag_7`, `roll_mean_7`) dominate — **temporal context > categorical context**.  
+- Limited impact of raw calendar features implies potential redundancy with rolling windows.  
+- To reach top performance:
+  - Add **hierarchical per-family training**.  
+  - Integrate **price, oil lagged interactions**, and **store clustering embeddings**.  
+  - Implement **GPU-based Optuna tuning** or **Bayesian optimization** for LightGBM.  
+  - Explore **hybrid deep learning models (LSTM, TFT)** for multi-horizon forecasting.
+
+---
+
+## 🧰 Technologies Used
 - **Python 3.10+**  
 - **LightGBM** for gradient boosting  
-- **Pandas**, **NumPy**, **Matplotlib**, **Seaborn** for data handling and visualization  
+- **Pandas**, **NumPy**, **Matplotlib**, **Seaborn** for data manipulation and visualization  
 - **Scikit-learn** for model evaluation and preprocessing utilities  
-- **SHAP** for explainability analysis  
 
 ---
-## File Structure
+
+## 📁 File Structure
 retail-demand-forecasting-with-lightgbm.ipynb
-
-
-The notebook contains the complete pipeline, including EDA, feature engineering, model training, and evaluation.
+The notebook contains the complete pipeline, including **EDA**, **feature engineering**, **model training**, and **evaluation**.
 
 ---
 
-## Future Improvements
-- Incorporate **external features** such as holidays, promotions, and weather data.  
-- Use **temporal cross-validation** or rolling-origin evaluation for improved robustness.  
+## 🚀 Future Improvements
+- Incorporate **additional external features** such as detailed holidays, promotions, and weather data.  
+- Use **temporal cross-validation** or **rolling-origin evaluation** for improved robustness.  
 - Explore **neural forecasting models** (e.g., LSTM, Temporal Fusion Transformer).  
-- Deploy the model as a **forecasting API** or **dashboard** for real-time insights.
+- Deploy the model as a **forecasting API** or **interactive dashboard** for real-time insights.
 
 ---
 
-## Author
+## 👤 Author
 **Matteo Sisti**  
-Master’s in Data Science and Engineering – Politecnico di Torino  
-Project focused on applied time series forecasting and ML model optimization.
+MSc in Data Science and Engineering – *Politecnico di Torino*  
+Project focused on **applied time series forecasting** and **ML model optimization**.  
+GitHub: [matteos07](https://github.com/matteos07) · Kaggle: [matteos07](https://www.kaggle.com/matteos07)
 
 
 ## File Structure
